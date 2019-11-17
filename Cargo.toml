@@ -1,0 +1,12 @@
+[package]
+name = "blackmagic-raw"
+version = "0.0.0"
+build = "build.rs"
+
+[build-dependencies]
+# We're very permissive here with bindgen due to https://github.com/rust-lang/cargo/issues/5237
+bindgen = "0.*"
+cc = "1.0"
+
+[dependencies]
+simple-error = "^0.1.12"
