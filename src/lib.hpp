@@ -13,6 +13,7 @@ HRESULT blackmagic_raw_set_callback(IBlackmagicRaw* codec, IBlackmagicRawCallbac
 HRESULT blackmagic_raw_flush_jobs(IBlackmagicRaw* codec);
 
 HRESULT blackmagic_raw_clip_create_job_read_frame(IBlackmagicRawClip* clip, uint64_t frameIndex, IBlackmagicRawJob** job);
+HRESULT blackmagic_raw_clip_create_job_trim(IBlackmagicRawClip* clip, const char* fileName, uint64_t frameIndex, uint64_t frameCount, IBlackmagicRawClipProcessingAttributes* clipProcessingAttributes, IBlackmagicRawFrameProcessingAttributes* frameProcessingAttributes, IBlackmagicRawJob** job);
 
 HRESULT blackmagic_raw_job_submit(IBlackmagicRawJob* job);
 

@@ -162,6 +162,18 @@ impl Clip {
             implementation: job,
         });
     }
+
+    // TODO: support attributes arguments
+    pub fn create_job_trim(&mut self, file_name: String, frame_index: u64, frame_count: u64) -> Result<Job, Box<dyn std::error::Error>> {
+        let mut job: *mut IBlackmagicRawJob = std::ptr::null_mut();
+        let file_name = CString::new(file_name)?;
+        unsafe {
+            void_result(blackmagic_raw_clip_create_job_trim(self.implementation, file_name.as_ptr(), frame_index, frame_count, std::ptr::null_mut(), std::ptr::null_mut(), &mut job))?;
+        }
+        return Ok(Job{
+            implementation: job,
+        });
+    }
 }
 
 pub struct Job {

@@ -73,6 +73,10 @@ HRESULT blackmagic_raw_clip_create_job_read_frame(IBlackmagicRawClip* clip, uint
     return clip->CreateJobReadFrame(frameIndex, job);
 }
 
+HRESULT blackmagic_raw_clip_create_job_trim(IBlackmagicRawClip* clip, const char* fileName, uint64_t frameIndex, uint64_t frameCount, IBlackmagicRawClipProcessingAttributes* clipProcessingAttributes, IBlackmagicRawFrameProcessingAttributes* frameProcessingAttributes, IBlackmagicRawJob** job) {
+    return clip->CreateJobTrim(CStringToString(fileName), frameIndex, frameCount, clipProcessingAttributes, frameProcessingAttributes, job);
+}
+
 HRESULT blackmagic_raw_job_submit(IBlackmagicRawJob* job) {
     return job->Submit();
 }
