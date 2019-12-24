@@ -1,4 +1,4 @@
-#![allow(non_snake_case, non_upper_case_globals)]
+#![allow(non_snake_case, non_upper_case_globals, non_camel_case_types)]
 include!(concat!(env!("OUT_DIR"), "/bindings.rs"));
 
 #[macro_use] extern crate simple_error;
@@ -415,6 +415,6 @@ mod tests {
 
     #[test]
     fn it_works() {
-        Factory::new();
+        let _ = Factory::new_from_path("/foo");
     }
 }
