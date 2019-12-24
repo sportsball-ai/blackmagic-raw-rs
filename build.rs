@@ -29,6 +29,8 @@ fn main() {
 
     #[cfg(target_os = "linux")]
     {
+        println!("cargo:rustc-link-lib=stdc++");
+
         cc::Build::new()
             .include("vendor/Linux/Include")
             .file("src/lib.cpp")
