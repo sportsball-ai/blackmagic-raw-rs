@@ -40,7 +40,6 @@ fn main() {
     }
 
     let bindings = bindings.header("src/lib.hpp")
-        .whitelist_function("unknown_.+")
         .whitelist_function(".*blackmagic_raw.+")
         .whitelist_type("_BlackmagicRaw.+")
         .generate()

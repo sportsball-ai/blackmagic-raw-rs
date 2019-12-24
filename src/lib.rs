@@ -38,7 +38,7 @@ unsafe impl Send for Factory {}
 impl Drop for Factory {
     fn drop(&mut self) {
         unsafe {
-            unknown_release(self.implementation as *mut IUnknown);
+            blackmagic_raw_unknown_release(self.implementation as *mut IUnknown);
         }
     }
 }
@@ -77,7 +77,7 @@ unsafe impl Send for Codec {}
 impl Drop for Codec {
     fn drop(&mut self) {
         unsafe {
-            unknown_release(self.implementation as *mut IUnknown);
+            blackmagic_raw_unknown_release(self.implementation as *mut IUnknown);
         }
     }
 }
@@ -115,7 +115,7 @@ impl Codec {
             Some(callback) => {
                 let callback = create_blackmagic_raw_callback(callback as *mut Box<dyn Callback + Send> as *mut c_void);
                 let result = void_result(blackmagic_raw_set_callback(self.implementation, callback));
-                unknown_release(callback as *mut IUnknown);
+                blackmagic_raw_unknown_release(callback as *mut IUnknown);
                 result
             },
             None => {
@@ -140,14 +140,14 @@ unsafe impl Send for Clip {}
 impl Drop for Clip {
     fn drop(&mut self) {
         unsafe {
-            unknown_release(self.implementation as *mut IUnknown);
+            blackmagic_raw_unknown_release(self.implementation as *mut IUnknown);
         }
     }
 }
 
 impl Clip {
     unsafe fn new_ref(clip: *mut IBlackmagicRawClip) -> Clip {
-        unknown_add_ref(clip as *mut IUnknown);
+        blackmagic_raw_unknown_add_ref(clip as *mut IUnknown);
         Clip{
             implementation: clip,
         }
@@ -185,14 +185,14 @@ unsafe impl Send for Job {}
 impl Drop for Job {
     fn drop(&mut self) {
         unsafe {
-            unknown_release(self.implementation as *mut IUnknown);
+            blackmagic_raw_unknown_release(self.implementation as *mut IUnknown);
         }
     }
 }
 
 impl Job {
     unsafe fn new_ref(job: *mut IBlackmagicRawJob) -> Job {
-        unknown_add_ref(job as *mut IUnknown);
+        blackmagic_raw_unknown_add_ref(job as *mut IUnknown);
         Job{
             implementation: job,
         }
@@ -229,14 +229,14 @@ unsafe impl Send for Frame {}
 impl Drop for Frame {
     fn drop(&mut self) {
         unsafe {
-            unknown_release(self.implementation as *mut IUnknown);
+            blackmagic_raw_unknown_release(self.implementation as *mut IUnknown);
         }
     }
 }
 
 impl Frame {
     unsafe fn new_ref(frame: *mut IBlackmagicRawFrame) -> Frame {
-        unknown_add_ref(frame as *mut IUnknown);
+        blackmagic_raw_unknown_add_ref(frame as *mut IUnknown);
         Frame{
             implementation: frame,
         }
@@ -274,14 +274,14 @@ unsafe impl Send for ProcessedImage {}
 impl Drop for ProcessedImage {
     fn drop(&mut self) {
         unsafe {
-            unknown_release(self.implementation as *mut IUnknown);
+            blackmagic_raw_unknown_release(self.implementation as *mut IUnknown);
         }
     }
 }
 
 impl ProcessedImage {
     unsafe fn new_ref(img: *mut IBlackmagicRawProcessedImage) -> ProcessedImage {
-        unknown_add_ref(img as *mut IUnknown);
+        blackmagic_raw_unknown_add_ref(img as *mut IUnknown);
         ProcessedImage{
             implementation: img,
         }
@@ -330,7 +330,7 @@ unsafe impl Send for ClipProcessingAttributes {}
 impl Drop for ClipProcessingAttributes {
     fn drop(&mut self) {
         unsafe {
-            unknown_release(self.implementation as *mut IUnknown);
+            blackmagic_raw_unknown_release(self.implementation as *mut IUnknown);
         }
     }
 }
@@ -344,7 +344,7 @@ unsafe impl Send for FrameProcessingAttributes {}
 impl Drop for FrameProcessingAttributes {
     fn drop(&mut self) {
         unsafe {
-            unknown_release(self.implementation as *mut IUnknown);
+            blackmagic_raw_unknown_release(self.implementation as *mut IUnknown);
         }
     }
 }

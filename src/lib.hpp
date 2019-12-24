@@ -2,8 +2,8 @@
 
 extern "C" {
 
-ULONG unknown_add_ref(IUnknown* obj);
-ULONG unknown_release(IUnknown* obj);
+ULONG blackmagic_raw_unknown_add_ref(IUnknown* obj);
+ULONG blackmagic_raw_unknown_release(IUnknown* obj);
 
 IBlackmagicRawFactory* create_blackmagic_raw_factory_instance_from_path(const char* path);
 HRESULT blackmagic_raw_factory_create_codec(IBlackmagicRawFactory* factory, IBlackmagicRaw** out);

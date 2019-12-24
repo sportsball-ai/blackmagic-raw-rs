@@ -42,11 +42,11 @@ typedef const char* String;
 
 extern "C" {
 
-ULONG unknown_add_ref(IUnknown* obj) {
+ULONG blackmagic_raw_unknown_add_ref(IUnknown* obj) {
     return obj->AddRef();
 }
 
-ULONG unknown_release(IUnknown* obj) {
+ULONG blackmagic_raw_unknown_release(IUnknown* obj) {
     return obj->Release();
 }
 
