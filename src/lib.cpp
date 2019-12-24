@@ -1,6 +1,7 @@
 #include "lib.hpp"
 
 #include <atomic>
+#include <cstring>
 
 #ifdef __APPLE__
 CFStringRef CStringToString(const char* s) {
