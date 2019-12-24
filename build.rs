@@ -13,9 +13,9 @@ fn main() {
         println!("cargo:rustc-link-lib=framework=CoreFoundation");
 
         cc::Build::new()
-            .include("vendor/Mac/include")
+            .include("vendor/Mac/Include")
             .file("src/lib.cpp")
-            .file("vendor/Mac/include/BlackmagicRawAPIDispatch.cpp")
+            .file("vendor/Mac/Include/BlackmagicRawAPIDispatch.cpp")
             .compile("braw");
 
         let sdk_root = "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk";
@@ -24,19 +24,19 @@ fn main() {
             .clang_arg("-x")
             .clang_arg("objective-c++")
             .clang_arg(format!("-isysroot{}", sdk_root))
-            .clang_arg("-Ivendor/Mac/include")
+            .clang_arg("-Ivendor/Mac/Include")
     }
 
     #[cfg(target_os = "linux")]
     {
         cc::Build::new()
-            .include("vendor/Linux/include")
+            .include("vendor/Linux/Include")
             .file("src/lib.cpp")
-            .file("vendor/Linux/include/BlackmagicRawAPIDispatch.cpp")
+            .file("vendor/Linux/Include/BlackmagicRawAPIDispatch.cpp")
             .compile("braw");
 
         bindings = bindgen::Builder::default()
-            .clang_arg("-Ivendor/Linux/include")
+            .clang_arg("-Ivendor/Linux/Include")
     }
 
     let bindings = bindings.header("src/lib.hpp")
