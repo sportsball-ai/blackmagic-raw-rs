@@ -34,6 +34,7 @@ pub struct Factory {
 }
 
 unsafe impl Send for Factory {}
+unsafe impl Sync for Factory {}
 
 impl Drop for Factory {
     fn drop(&mut self) {
@@ -57,7 +58,7 @@ impl Factory {
         }
     }
 
-    pub fn create_codec(&mut self) -> Result<Codec, Error> {
+    pub fn create_codec(&self) -> Result<Codec, Error> {
         let mut codec: *mut IBlackmagicRaw = std::ptr::null_mut();
         unsafe {
             void_result(blackmagic_raw_factory_create_codec(self.implementation, &mut codec))?;
@@ -151,6 +152,38 @@ impl Clip {
         Clip{
             implementation: clip,
         }
+    }
+
+    pub fn get_width(&mut self) -> Result<u32, Error> {
+        let mut width = 0;
+        unsafe {
+            void_result(blackmagic_raw_clip_get_width(self.implementation, &mut width))?;
+        }
+        return Ok(width)
+    }
+
+    pub fn get_height(&mut self) -> Result<u32, Error> {
+        let mut height = 0;
+        unsafe {
+            void_result(blackmagic_raw_clip_get_height(self.implementation, &mut height))?;
+        }
+        return Ok(height)
+    }
+
+    pub fn get_frame_rate(&mut self) -> Result<f32, Error> {
+        let mut frame_rate = 0.0;
+        unsafe {
+            void_result(blackmagic_raw_clip_get_frame_rate(self.implementation, &mut frame_rate))?;
+        }
+        return Ok(frame_rate)
+    }
+
+    pub fn get_frame_count(&mut self) -> Result<u64, Error> {
+        let mut frame_count = 0;
+        unsafe {
+            void_result(blackmagic_raw_clip_get_frame_count(self.implementation, &mut frame_count))?;
+        }
+        return Ok(frame_count)
     }
 
     pub fn create_job_read_frame(&mut self, frame: u64) -> Result<Job, Error> {

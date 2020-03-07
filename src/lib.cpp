@@ -70,6 +70,22 @@ HRESULT blackmagic_raw_flush_jobs(IBlackmagicRaw* codec) {
     return codec->FlushJobs();
 }
 
+HRESULT blackmagic_raw_clip_get_width(IBlackmagicRawClip* clip, uint32_t *out) {
+    return clip->GetWidth(out);
+}
+
+HRESULT blackmagic_raw_clip_get_height(IBlackmagicRawClip* clip, uint32_t *out) {
+    return clip->GetHeight(out);
+}
+
+HRESULT blackmagic_raw_clip_get_frame_rate(IBlackmagicRawClip* clip, float *out) {
+    return clip->GetFrameRate(out);
+}
+
+HRESULT blackmagic_raw_clip_get_frame_count(IBlackmagicRawClip* clip, uint64_t *out) {
+    return clip->GetFrameCount(out);
+}
+
 HRESULT blackmagic_raw_clip_create_job_read_frame(IBlackmagicRawClip* clip, uint64_t frameIndex, IBlackmagicRawJob** job) {
     return clip->CreateJobReadFrame(frameIndex, job);
 }

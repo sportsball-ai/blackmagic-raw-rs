@@ -12,6 +12,10 @@ HRESULT blackmagic_raw_open_clip(IBlackmagicRaw* codec, const char* fileName, IB
 HRESULT blackmagic_raw_set_callback(IBlackmagicRaw* codec, IBlackmagicRawCallback* callback);
 HRESULT blackmagic_raw_flush_jobs(IBlackmagicRaw* codec);
 
+HRESULT blackmagic_raw_clip_get_width(IBlackmagicRawClip* clip, uint32_t *out);
+HRESULT blackmagic_raw_clip_get_height(IBlackmagicRawClip* clip, uint32_t *out);
+HRESULT blackmagic_raw_clip_get_frame_rate(IBlackmagicRawClip* clip, float *out);
+HRESULT blackmagic_raw_clip_get_frame_count(IBlackmagicRawClip* clip, uint64_t *out);
 HRESULT blackmagic_raw_clip_create_job_read_frame(IBlackmagicRawClip* clip, uint64_t frameIndex, IBlackmagicRawJob** job);
 HRESULT blackmagic_raw_clip_create_job_trim(IBlackmagicRawClip* clip, const char* fileName, uint64_t frameIndex, uint64_t frameCount, IBlackmagicRawClipProcessingAttributes* clipProcessingAttributes, IBlackmagicRawFrameProcessingAttributes* frameProcessingAttributes, IBlackmagicRawJob** job);
 
