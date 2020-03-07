@@ -50,6 +50,10 @@ ULONG blackmagic_raw_unknown_release(IUnknown* obj) {
     return obj->Release();
 }
 
+HRESULT blackmagic_raw_unknown_query_interface(IUnknown* obj, REFIID iid, LPVOID* iface) {
+    return obj->QueryInterface(iid, iface);
+}
+
 IBlackmagicRawFactory* create_blackmagic_raw_factory_instance_from_path(const char* path) {
     return CreateBlackmagicRawFactoryInstanceFromPath(CStringToString(path));
 }
@@ -92,6 +96,18 @@ HRESULT blackmagic_raw_clip_create_job_read_frame(IBlackmagicRawClip* clip, uint
 
 HRESULT blackmagic_raw_clip_create_job_trim(IBlackmagicRawClip* clip, const char* fileName, uint64_t frameIndex, uint64_t frameCount, IBlackmagicRawClipProcessingAttributes* clipProcessingAttributes, IBlackmagicRawFrameProcessingAttributes* frameProcessingAttributes, IBlackmagicRawJob** job) {
     return clip->CreateJobTrim(CStringToString(fileName), frameIndex, frameCount, clipProcessingAttributes, frameProcessingAttributes, job);
+}
+
+HRESULT blackmagic_raw_clip_audio_get_channel_count(IBlackmagicRawClipAudio* audio, uint32_t *out) {
+    return audio->GetAudioChannelCount(out);
+}
+
+HRESULT blackmagic_raw_clip_audio_get_sample_rate(IBlackmagicRawClipAudio* audio, uint32_t *out) {
+    return audio->GetAudioSampleRate(out);
+}
+
+HRESULT blackmagic_raw_clip_audio_get_sample_count(IBlackmagicRawClipAudio* audio, uint64_t *out) {
+    return audio->GetAudioSampleCount(out);
 }
 
 HRESULT blackmagic_raw_job_submit(IBlackmagicRawJob* job) {

@@ -29,6 +29,29 @@ fn void_result(result: HRESULT) -> Result<(), Error> {
     }
 }
 
+impl REFIID {
+    fn new(b: [u8; 16]) -> REFIID {
+        REFIID{
+            byte0: b[0],
+            byte1: b[1],
+            byte2: b[2],
+            byte3: b[3],
+            byte4: b[4],
+            byte5: b[5],
+            byte6: b[6],
+            byte7: b[7],
+            byte8: b[8],
+            byte9: b[9],
+            byte10: b[10],
+            byte11: b[11],
+            byte12: b[12],
+            byte13: b[13],
+            byte14: b[14],
+            byte15: b[15],
+        }
+    }
+}
+
 pub struct Factory {
     implementation: *mut IBlackmagicRawFactory,
 }
@@ -186,6 +209,25 @@ impl Clip {
         return Ok(frame_count)
     }
 
+    unsafe fn query_interface<T>(&self, iid: REFIID) -> Result<*mut T, Error> {
+            let mut iface: *mut T = std::ptr::null_mut();
+            void_result(blackmagic_raw_unknown_query_interface(self.implementation as *mut IUnknown, iid, std::mem::transmute::<&mut *mut T, &mut *mut c_void>(&mut iface)))?;
+            Ok(iface)
+    }
+
+    pub fn get_audio(&mut self) -> Result<Option<ClipAudio>, Error> {
+        unsafe {
+            let audio = self.query_interface::<IBlackmagicRawClipAudio>(REFIID::new([0x76,0xD4,0xAC,0xED,0xE0,0xD6,0x45,0xBB,0xB5,0x47,0x56,0xB7,0x43,0x5B,0x2A,0x1D]))?;
+            if audio.is_null() {
+                Ok(None)
+            } else {
+                Ok(Some(ClipAudio{
+                    implementation: audio,
+                }))
+            }
+        }
+    }
+
     pub fn create_job_read_frame(&mut self, frame: u64) -> Result<Job, Error> {
         let mut job: *mut IBlackmagicRawJob = std::ptr::null_mut();
         unsafe {
@@ -206,6 +248,46 @@ impl Clip {
         return Ok(Job{
             implementation: job,
         });
+    }
+}
+
+pub struct ClipAudio {
+    implementation: *mut IBlackmagicRawClipAudio,
+}
+
+unsafe impl Send for ClipAudio {}
+
+impl Drop for ClipAudio {
+    fn drop(&mut self) {
+        unsafe {
+            blackmagic_raw_unknown_release(self.implementation as *mut IUnknown);
+        }
+    }
+}
+
+impl ClipAudio {
+    pub fn get_channel_count(&mut self) -> Result<u32, Error> {
+        let mut ret = 0;
+        unsafe {
+            void_result(blackmagic_raw_clip_audio_get_channel_count(self.implementation, &mut ret))?;
+        }
+        return Ok(ret)
+    }
+
+    pub fn get_sample_rate(&mut self) -> Result<u32, Error> {
+        let mut ret = 0;
+        unsafe {
+            void_result(blackmagic_raw_clip_audio_get_sample_rate(self.implementation, &mut ret))?;
+        }
+        return Ok(ret)
+    }
+
+    pub fn get_sample_count(&mut self) -> Result<u64, Error> {
+        let mut ret = 0;
+        unsafe {
+            void_result(blackmagic_raw_clip_audio_get_sample_count(self.implementation, &mut ret))?;
+        }
+        return Ok(ret)
     }
 }
 
