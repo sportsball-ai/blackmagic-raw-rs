@@ -128,13 +128,13 @@ impl Codec {
         });
     }
 
-    pub fn with_callback<T, F, V>(&mut self, callback: T, f: F) -> Result<V, Box<dyn std::error::Error>>
-        where T: Callback + Send + 'static,
+    pub fn with_callback<'a, T, F, V>(&mut self, callback: T, f: F) -> Result<V, Box<dyn std::error::Error>>
+        where T: Callback + Send + 'a,
               F: FnOnce(&mut Codec) -> V,
     {
-        let mut callback: Box<dyn Callback + Send> = Box::new(callback);
+        let mut callback: Box<dyn Callback + Send + 'a> = Box::new(callback);
         unsafe {
-            self.set_callback(Some(&mut callback))?;
+            self.set_callback(Some(std::mem::transmute::<&mut Box::<dyn Callback + Send + 'a>, &mut Box::<dyn Callback + Send>>(&mut callback)))?;
         }
         let ret = f(self);
         unsafe {
