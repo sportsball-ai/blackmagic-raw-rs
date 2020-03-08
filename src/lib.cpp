@@ -1,7 +1,70 @@
 #include "lib.hpp"
 
 #include <atomic>
+#include <cstdlib>
 #include <cstring>
+
+struct Buffer {
+    explicit Buffer(const char* data) : _data(data) {}
+    ~Buffer() {
+        free((void*)_data);
+    }
+    const char* _data;
+};
+
+#ifdef __APPLE__
+Buffer* CopyString(CFStringRef s) {
+    CFIndex length = CFStringGetLength(s);
+    CFIndex maxSize = CFStringGetMaximumSizeForEncoding(length, kCFStringEncodingUTF8) + 1;
+    char* data = (char*)malloc(maxSize);
+    CFStringGetCString(s, data, maxSize, kCFStringEncodingUTF8);
+    return new Buffer(data);
+}
+#else
+Buffer* CopyString(const char* s) {
+    size_t l = strlen(s);
+    char* buf = (char*)malloc(l);
+    memcpy(buf, s, l);
+    return new Buffer(buf);
+}
+#endif
+
+struct StringArg {
+    explicit StringArg(Buffer** dest) : _temp(nullptr), _dest(dest) {}
+
+#ifdef __APPLE__
+    ~StringArg() {
+        if (_temp == nullptr) {
+            *_dest = nullptr;
+        } else {
+            CFIndex length = CFStringGetLength(_temp);
+            CFIndex maxSize = CFStringGetMaximumSizeForEncoding(length, kCFStringEncodingUTF8) + 1;
+            char* data = (char*)malloc(maxSize);
+            CFStringGetCString(_temp, data, maxSize, kCFStringEncodingUTF8);
+            *_dest = new Buffer(data);
+            CFRelease(_temp);
+        }
+    }
+
+    operator CFStringRef*() {
+        return &_temp;
+    }
+
+    CFStringRef _temp;
+#else
+    ~StringArg() {
+        *_dest = new Buffer(_temp);
+    }
+
+    operator const char**() {
+        return &_temp;
+    }
+
+    const char* _temp;
+#endif
+
+    Buffer** _dest;
+};
 
 #ifdef __APPLE__
 CFStringRef CStringToString(const char* s) {
@@ -90,6 +153,10 @@ HRESULT blackmagic_raw_clip_get_frame_count(IBlackmagicRawClip* clip, uint64_t *
     return clip->GetFrameCount(out);
 }
 
+HRESULT blackmagic_raw_clip_get_metadata_iterator(IBlackmagicRawClip* clip, IBlackmagicRawMetadataIterator** iterator) {
+    return clip->GetMetadataIterator(iterator);
+}
+
 HRESULT blackmagic_raw_clip_create_job_read_frame(IBlackmagicRawClip* clip, uint64_t frameIndex, IBlackmagicRawJob** job) {
     return clip->CreateJobReadFrame(frameIndex, job);
 }
@@ -108,6 +175,18 @@ HRESULT blackmagic_raw_clip_audio_get_sample_rate(IBlackmagicRawClipAudio* audio
 
 HRESULT blackmagic_raw_clip_audio_get_sample_count(IBlackmagicRawClipAudio* audio, uint64_t *out) {
     return audio->GetAudioSampleCount(out);
+}
+
+HRESULT blackmagic_raw_metadata_iterator_next(IBlackmagicRawMetadataIterator* it) {
+    return it->Next();
+}
+
+HRESULT blackmagic_raw_metadata_iterator_get_key(IBlackmagicRawMetadataIterator* it, Buffer** key) {
+    return it->GetKey(StringArg(key));
+}
+
+HRESULT blackmagic_raw_metadata_iterator_get_data(IBlackmagicRawMetadataIterator* it, Variant* data) {
+    return it->GetData(data);
 }
 
 HRESULT blackmagic_raw_job_submit(IBlackmagicRawJob* job) {
@@ -223,6 +302,20 @@ struct Callback: IBlackmagicRawCallback {
 
 IBlackmagicRawCallback* create_blackmagic_raw_callback(void* implementation) {
     return new Callback(implementation);
+}
+
+const void* buffer_data(Buffer* buf) {
+    return buf->_data;
+}
+
+void buffer_release(Buffer* obj) {
+    if (obj != nullptr) {
+        delete obj;
+    }
+}
+
+void blackmagic_raw_variant_get_string(Variant* v, Buffer** out) {
+    *out = CopyString(v->bstrVal);
 }
 
 }

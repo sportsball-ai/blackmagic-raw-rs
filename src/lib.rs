@@ -29,6 +29,16 @@ fn void_result(result: HRESULT) -> Result<(), Error> {
     }
 }
 
+fn void_option_result(result: HRESULT) -> Result<Option<()>, Error> {
+    match result {
+        0 => Ok(Some(())),
+        1 => Ok(None),
+        result => Err(Error{
+            result: result,
+        }),
+    }
+}
+
 impl REFIID {
     fn new(b: [u8; 16]) -> REFIID {
         REFIID{
@@ -209,22 +219,26 @@ impl Clip {
         return Ok(frame_count)
     }
 
-    unsafe fn query_interface<T>(&self, iid: REFIID) -> Result<*mut T, Error> {
+    pub fn get_metadata_iterator(&mut self) -> Result<MetadataIterator, Error> {
+        let mut iface: *mut IBlackmagicRawMetadataIterator = std::ptr::null_mut();
+        unsafe {
+            void_result(blackmagic_raw_clip_get_metadata_iterator(self.implementation, &mut iface))?;
+        }
+        return Ok(MetadataIterator{
+            implementation: iface,
+        })
+    }
+
+    unsafe fn query_interface<T>(&self, iid: REFIID) -> Result<Option<*mut T>, Error> {
             let mut iface: *mut T = std::ptr::null_mut();
-            void_result(blackmagic_raw_unknown_query_interface(self.implementation as *mut IUnknown, iid, std::mem::transmute::<&mut *mut T, &mut *mut c_void>(&mut iface)))?;
-            Ok(iface)
+            Ok(void_option_result(blackmagic_raw_unknown_query_interface(self.implementation as *mut IUnknown, iid, std::mem::transmute::<&mut *mut T, &mut *mut c_void>(&mut iface)))?.map(|_| iface))
     }
 
     pub fn get_audio(&mut self) -> Result<Option<ClipAudio>, Error> {
         unsafe {
-            let audio = self.query_interface::<IBlackmagicRawClipAudio>(REFIID::new([0x76,0xD4,0xAC,0xED,0xE0,0xD6,0x45,0xBB,0xB5,0x47,0x56,0xB7,0x43,0x5B,0x2A,0x1D]))?;
-            if audio.is_null() {
-                Ok(None)
-            } else {
-                Ok(Some(ClipAudio{
-                    implementation: audio,
-                }))
-            }
+            Ok(self.query_interface::<IBlackmagicRawClipAudio>(REFIID::new([0x76,0xD4,0xAC,0xED,0xE0,0xD6,0x45,0xBB,0xB5,0x47,0x56,0xB7,0x43,0x5B,0x2A,0x1D]))?.map(|audio| ClipAudio{
+                implementation: audio,
+            }))
         }
     }
 
@@ -522,6 +536,154 @@ unsafe extern "C" fn callback_prepare_pipeline_complete(implementation: *mut Box
     let implementation = &mut *implementation;
     // TODO: pass along user data?
     implementation.prepare_pipeline_complete(void_result(result));
+}
+
+pub struct MetadataIterator {
+    implementation: *mut IBlackmagicRawMetadataIterator,
+}
+
+unsafe impl Send for MetadataIterator {}
+
+impl Drop for MetadataIterator {
+    fn drop(&mut self) {
+        unsafe {
+            blackmagic_raw_unknown_release(self.implementation as *mut IUnknown);
+        }
+    }
+}
+
+pub enum Value {
+    UInt8(u8),
+    Int16(i16),
+    UInt16(u16),
+    Int32(i32),
+    UInt32(u32),
+    Float(f32),
+    String(String),
+    Array(Vec<Value>),
+}
+
+impl Value {
+    unsafe fn new_from_safe_array(arr: *mut SafeArray) -> Result<Option<Value>, Error> {
+        let mut t = _BlackmagicRawVariantType_blackmagicRawVariantTypeEmpty;
+        void_result(SafeArrayGetVartype(arr, &mut t))?;
+
+        let mut u = 0;
+        void_result(SafeArrayGetUBound(arr, 1, &mut u))?;
+
+        let mut l = 0;
+        void_result(SafeArrayGetLBound(arr, 1, &mut l))?;
+
+		let len = (u - l) + 1;
+
+        let mut data: *mut c_void = std::ptr::null_mut();
+        void_result(SafeArrayAccessData(arr, &mut data))?;
+
+        let ret = match t {
+            _BlackmagicRawVariantType_blackmagicRawVariantTypeU8 => {
+                let slice = std::slice::from_raw_parts(data as *mut u8, len as _);
+                Some(Value::Array(slice.iter().map(|v| Value::UInt8(*v)).collect()))
+            },
+            _BlackmagicRawVariantType_blackmagicRawVariantTypeS16 => {
+                let slice = std::slice::from_raw_parts(data as *mut i16, len as _);
+                Some(Value::Array(slice.iter().map(|v| Value::Int16(*v)).collect()))
+            },
+            _BlackmagicRawVariantType_blackmagicRawVariantTypeU16 => {
+                let slice = std::slice::from_raw_parts(data as *mut u16, len as _);
+                Some(Value::Array(slice.iter().map(|v| Value::UInt16(*v)).collect()))
+            },
+            _BlackmagicRawVariantType_blackmagicRawVariantTypeS32 => {
+                let slice = std::slice::from_raw_parts(data as *mut i32, len as _);
+                Some(Value::Array(slice.iter().map(|v| Value::Int32(*v)).collect()))
+            },
+            _BlackmagicRawVariantType_blackmagicRawVariantTypeU32 => {
+                let slice = std::slice::from_raw_parts(data as *mut u32, len as _);
+                Some(Value::Array(slice.iter().map(|v| Value::UInt32(*v)).collect()))
+            },
+            _BlackmagicRawVariantType_blackmagicRawVariantTypeFloat32 => {
+                let slice = std::slice::from_raw_parts(data as *mut f32, len as _);
+                Some(Value::Array(slice.iter().map(|v| Value::Float(*v)).collect()))
+            },
+            _ => None,
+        };
+
+        void_result(SafeArrayUnaccessData(arr))?;
+
+        return Ok(ret)
+    }
+}
+
+impl std::iter::Iterator for MetadataIterator {
+    type Item = (String, Value);
+
+    fn next(&mut self) -> Option<(String, Value)> {
+        let mut value = Variant{
+            vt: _BlackmagicRawVariantType_blackmagicRawVariantTypeEmpty,
+            __bindgen_anon_1: Variant__bindgen_ty_1{
+                iVal: 0,
+            },
+        };
+
+        loop {
+            unsafe {
+                match void_option_result(blackmagic_raw_metadata_iterator_next(self.implementation)) {
+                    Ok(Some(_)) => {},
+                    _ => return None,
+                };
+
+                let mut buf: *mut Buffer = std::ptr::null_mut();
+                let key = match void_result(blackmagic_raw_metadata_iterator_get_key(self.implementation, &mut buf)) {
+                    Ok(_) => {
+                        let key = std::ffi::CStr::from_ptr(buffer_data(buf) as *const i8).to_str().unwrap_or("").to_string();
+                        buffer_release(buf);
+                        key
+                    },
+                    _ => return None,
+                };
+
+                VariantInit(&mut value);
+
+                match void_result(blackmagic_raw_metadata_iterator_get_data(self.implementation, &mut value)) {
+                    Ok(()) => {},
+                    _ => return None,
+                };
+
+                let ret = match value.vt {
+                    _BlackmagicRawVariantType_blackmagicRawVariantTypeS16 => Value::Int16(value.__bindgen_anon_1.iVal),
+                    _BlackmagicRawVariantType_blackmagicRawVariantTypeU16 => Value::UInt16(value.__bindgen_anon_1.uiVal),
+                    _BlackmagicRawVariantType_blackmagicRawVariantTypeS32 => Value::Int32(value.__bindgen_anon_1.intVal),
+                    _BlackmagicRawVariantType_blackmagicRawVariantTypeU32 => Value::UInt32(value.__bindgen_anon_1.uintVal),
+                    _BlackmagicRawVariantType_blackmagicRawVariantTypeFloat32 => Value::Float(value.__bindgen_anon_1.fltVal),
+                    _BlackmagicRawVariantType_blackmagicRawVariantTypeString => {
+                        let mut buf: *mut Buffer = std::ptr::null_mut();
+                        blackmagic_raw_variant_get_string(&mut value, &mut buf);
+                        let s = std::ffi::CStr::from_ptr(buffer_data(buf) as *const i8).to_str().unwrap_or("").to_string();
+                        buffer_release(buf);
+                        Value::String(s)
+                    },
+                    _BlackmagicRawVariantType_blackmagicRawVariantTypeSafeArray => match Value::new_from_safe_array(value.__bindgen_anon_1.parray) {
+                        Ok(Some(v)) => v,
+                        Ok(None) => {
+                            VariantClear(&mut value);
+                            continue;
+                        }
+                        Err(_) => {
+                            VariantClear(&mut value);
+                            return None;
+                        }
+                    },
+                    _ => {
+                        VariantClear(&mut value);
+                        continue;
+                    }
+                };
+
+                VariantClear(&mut value);
+
+                return Some((key, ret));
+            }
+        }
+    }
 }
 
 #[cfg(test)]

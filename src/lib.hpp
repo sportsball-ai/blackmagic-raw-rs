@@ -1,5 +1,7 @@
 #include <BlackmagicRawAPI.h>
 
+struct Buffer;
+
 extern "C" {
 
 ULONG blackmagic_raw_unknown_add_ref(IUnknown* obj);
@@ -17,12 +19,18 @@ HRESULT blackmagic_raw_clip_get_width(IBlackmagicRawClip* clip, uint32_t *out);
 HRESULT blackmagic_raw_clip_get_height(IBlackmagicRawClip* clip, uint32_t *out);
 HRESULT blackmagic_raw_clip_get_frame_rate(IBlackmagicRawClip* clip, float *out);
 HRESULT blackmagic_raw_clip_get_frame_count(IBlackmagicRawClip* clip, uint64_t *out);
+HRESULT blackmagic_raw_clip_get_metadata_iterator(IBlackmagicRawClip* clip, IBlackmagicRawMetadataIterator** iterator);
+
 HRESULT blackmagic_raw_clip_create_job_read_frame(IBlackmagicRawClip* clip, uint64_t frameIndex, IBlackmagicRawJob** job);
 HRESULT blackmagic_raw_clip_create_job_trim(IBlackmagicRawClip* clip, const char* fileName, uint64_t frameIndex, uint64_t frameCount, IBlackmagicRawClipProcessingAttributes* clipProcessingAttributes, IBlackmagicRawFrameProcessingAttributes* frameProcessingAttributes, IBlackmagicRawJob** job);
 
 HRESULT blackmagic_raw_clip_audio_get_channel_count(IBlackmagicRawClipAudio* audio, uint32_t *out);
 HRESULT blackmagic_raw_clip_audio_get_sample_rate(IBlackmagicRawClipAudio* audio, uint32_t *out);
 HRESULT blackmagic_raw_clip_audio_get_sample_count(IBlackmagicRawClipAudio* audio, uint64_t *out);
+
+HRESULT blackmagic_raw_metadata_iterator_next(IBlackmagicRawMetadataIterator* it);
+HRESULT blackmagic_raw_metadata_iterator_get_key(IBlackmagicRawMetadataIterator* it, Buffer** key);
+HRESULT blackmagic_raw_metadata_iterator_get_data(IBlackmagicRawMetadataIterator* it, Variant* data);
 
 HRESULT blackmagic_raw_job_submit(IBlackmagicRawJob* job);
 
@@ -35,5 +43,10 @@ HRESULT blackmagic_raw_processed_image_get_resource_size_bytes(IBlackmagicRawPro
 HRESULT blackmagic_raw_processed_image_get_resource(IBlackmagicRawProcessedImage* img, void** bytes);
 
 IBlackmagicRawCallback* create_blackmagic_raw_callback(void* implementation);
+
+const void* buffer_data(Buffer* str);
+void buffer_release(Buffer* str);
+
+void blackmagic_raw_variant_get_string(Variant* v, Buffer** out);
 
 }
