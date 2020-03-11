@@ -23,8 +23,8 @@ Buffer* CopyString(CFStringRef s) {
 #else
 Buffer* CopyString(const char* s) {
     size_t l = strlen(s);
-    char* buf = (char*)malloc(l);
-    memcpy(buf, s, l);
+    char* buf = (char*)malloc(l + 1);
+    strcpy(buf, s);
     return new Buffer(buf);
 }
 #endif
