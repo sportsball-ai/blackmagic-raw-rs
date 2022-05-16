@@ -634,7 +634,7 @@ impl std::iter::Iterator for MetadataIterator {
                 let mut buf: *mut Buffer = std::ptr::null_mut();
                 let key = match void_result(blackmagic_raw_metadata_iterator_get_key(self.implementation, &mut buf)) {
                     Ok(_) => {
-                        let key = std::ffi::CStr::from_ptr(buffer_data(buf) as *const i8).to_str().unwrap_or("").to_string();
+                        let key = std::ffi::CStr::from_ptr(buffer_data(buf) as *const c_char).to_str().unwrap_or("").to_string();
                         buffer_release(buf);
                         key
                     },
@@ -657,7 +657,7 @@ impl std::iter::Iterator for MetadataIterator {
                     _BlackmagicRawVariantType_blackmagicRawVariantTypeString => {
                         let mut buf: *mut Buffer = std::ptr::null_mut();
                         blackmagic_raw_variant_get_string(&mut value, &mut buf);
-                        let s = std::ffi::CStr::from_ptr(buffer_data(buf) as *const i8).to_str().unwrap_or("").to_string();
+                        let s = std::ffi::CStr::from_ptr(buffer_data(buf) as *const c_char).to_str().unwrap_or("").to_string();
                         buffer_release(buf);
                         Value::String(s)
                     },
