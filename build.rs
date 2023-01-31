@@ -42,11 +42,11 @@ fn main() {
     }
 
     let bindings = bindings.header("src/lib.hpp")
-        .whitelist_function(".*blackmagic_raw.+")
-        .whitelist_function("Variant.+")
-        .whitelist_function("buffer_.+")
-        .whitelist_function("SafeArray.+")
-        .whitelist_type("_BlackmagicRaw.+")
+        .allowlist_function(".*blackmagic_raw.+")
+        .allowlist_function("Variant.+")
+        .allowlist_function("buffer_.+")
+        .allowlist_function("SafeArray.+")
+        .allowlist_type("_BlackmagicRaw.+")
         .generate()
         .expect("unable to generate bindings");
 
